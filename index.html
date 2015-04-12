@@ -169,8 +169,9 @@
         <div class="container">
 
            <div id="results" class="row">
-		   
-		   
+				<h2>Results</h2>
+				<table class="table table-striped"> 
+				</table>
 		   </div>
              <!--    <div class="col-lg-5 col-lg-offset-1 col-sm-push-6  col-sm-6">
                     <hr class="section-heading-spacer">
@@ -326,23 +327,22 @@
 			if(data == lastresults){
 				return;
 			}
-			var mydiv = $("#results");
-			mydiv.empty();
-			mydiv.append("<h2>Results</h2>");
-			mydiv.append("<table class='table table-striped'>");
-			mydiv.append("<tr><th colspan='2'>Solar Power Daily/Monthly Average for your location </th></tr>");
-			mydiv.append("<tr><th>Month</th><th>Electricity Production</th><th>Avoided CO<sub>2</sub> emission</th></th><th>Monthly Savings</th></tr>");
+			$("#results").show();
+			var mytable = $("#results table");
+			mytable.empty();
+			mytable.append("<tr><th colspan='4'>Solar Power Daily/Monthly Average for your location in "+data.station_info.city+", "+ data.station_info.state+"</th></tr>");
+			mytable.append("<tr><th>Month</th><th>Electricity Production</th><th>Avoided CO<sub>2</sub> emission</th></th><th>Monthly Savings</th></tr>");
 			console.log(data.outputs);
 			var sumSavings = 0;
+			var sumCarbon = 0;
+			var sumProduction = 0;
 			$.each(data.outputs.ac_monthly, function (i, item) {
-				console.log(data.outputs.solrad_monthly[i]);
-				console.log(ELECTRICITY_PRICE[i]);
-				mydiv.append("<tr><td>"+MONTHS[i]+"</td><td>"+data.outputs.ac_monthly[i].toFixed(2)+" kWh</td><td>"+(data.outputs.ac_monthly[i]*CARBON_POUNDS_PER_KWH).toFixed(2)+" pounds</td><td>$ "+(data.outputs.ac_monthly[i]*ELECTRICITY_PRICE[i]).toFixed(2)+"</td></tr>");
+				mytable.append("<tr><td>"+MONTHS[i]+"</td><td>"+data.outputs.ac_monthly[i].toFixed(2)+" kWh</td><td>"+(data.outputs.ac_monthly[i]*CARBON_POUNDS_PER_KWH).toFixed(2)+" pounds</td><td>$ "+(data.outputs.ac_monthly[i]*ELECTRICITY_PRICE[i]).toFixed(2)+"</td></tr>");
 				sumSavings += data.outputs.ac_monthly[i]*ELECTRICITY_PRICE[i];
+				sumProduction += data.outputs.ac_monthly[i];
+				sumCarbon += data.outputs.ac_monthly[i]*CARBON_POUNDS_PER_KWH;
 			});
-			mydiv.append("<tr><td colspan='2'>Annual estimated savings:</td><td>$ "+sumSavings.toFixed(2)+"</td></tr>");
-			mydiv.append("</table>");
-			
+			mytable.append("<tr><td>Annual estimations:</td><td>"+sumProduction.toFixed(2) +" kWh</td><td>"+sumCarbon.toFixed(2) +" pounds</td><td>$ "+sumSavings.toFixed(2)+"</td></tr>");			
 			lastresults = data;
 		}
 
@@ -364,6 +364,8 @@
 			e.preventDefault();
             loadResults($("#zipcode").val(), $("#capacity").val());
         });
+		
+		$("#results").hide();
 
 		
 	</script>
