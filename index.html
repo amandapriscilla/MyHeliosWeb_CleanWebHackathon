@@ -72,7 +72,7 @@
                 <div class="col-lg-12">
                     <div class="intro-message">
                         <h1><i>myHelios</i> Project</h1>
-                        <h3>Enlightening consumers to their potential solar power</h3>
+                        <h3>Shedding light on your potential solar power</h3>
                         <hr class="intro-divider">
                         <!--<ul class="list-inline intro-social-buttons">
                             <li>
@@ -141,11 +141,11 @@
 					  <div class="form-group">
 						<label for="capacity">System Capacity</label>
 						<select class="form-control" id="capacity" placeholder="Select the capacity:" style="width: 150px;">
-						  <option value="1">1kw</option>
-						  <option value="2">2kw</option>
-						  <option value="3">3kw</option>
-						  <option value="4">4kw</option>
-						  <option value="5">5kw</option>
+						  <option value="1">1 kW</option>
+						  <option value="2">2 kW</option>
+						  <option value="3">3 kW</option>
+						  <option value="4">4 kW</option>
+						  <option value="5">5 kW</option>
 						</select>
 		
 						<p class="help-block">Help: the system requires 100 feet<sup>2</sup> of space per kW to place panels, i.e., to have a 4kw system you need 400 feet<sup>2</sup> of roof area facing south and without shadows</p>
@@ -273,11 +273,54 @@
 
     <!-- Bootstrap Core JavaScript -->
     <script src="js/bootstrap.min.js"></script>
-	<script type="text/javascript">	
+	<script type="text/javascript">
+		/* CONSTANTS */
+		// domestic hot water comsumption in liters per person per day
+		var DHWC_PERSON = 94.6;
+		// number of solar collectors
+		var NUM_COLLECTORS = 2;
+		// temperature increase required in Kelvin
+		var DELTA_TEMP = 41;
+		// water specific heat in K=kJ/(kg * K)
+		var WATER_SH = 4.187;
+		// natural gas system efficiency
+		var NG_SYS_EFF = 0.56;
+		// collector size in m^2
+		var COLLECTOR_SIZE = 3.7161;
+		// solar system efficiency
+		var SOLAR_SYS_EFF = [0.35, 0.35, 0.4, 0.45, 0.5, 0.55, 0.55, 0.5, 0.45, 0.4, 0.4, 0.35];
+		// natural gas price $ / kWh
+		var NG_PRICE = [0.04928309,0.04689402, 0.050989568, 0.053617544, 0.05003394, 0.050477624, 0.054846208, 0.055255763, 0.052423009, 0.044743858, 0.04928309, 0.050580013];
+		var DAYS_IN_MONTH = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+		// electricity price $ / kWh
+		var ELECTRICITY_PRICE = [0.24, 0.241, 0.241, 0.18, 0.18, 0.18, 0.18, 0.18, 0.189, 0.186, 0.185, 0.195];
+		// PV system cost in $ / kW
+		var PV_SYSTEM_COST = 4240;
+		// maintenance cost per year $ / kW
+		var MAINTENANCE_COST_YEAR = 20;
+		// federal tax incentive
+		var TAX_INCENTIVE = 0.3;
+		// yearly increase in electricity price
+		var ELECTRICITY_INCREASE_YEAR = 0.05;
+		// yearly increase in maintenance price
+		var MAINTENANCE_INCREASE_YEAR = 0.02;
+		// internal rate of return
+		var IRR = 0.07;
+		// system lifespan in years
+		var SYSTEM_LIFESPAN = 20;
+		// Cut rate on initial price
+		var CUT_RATE = 0.3;
+		// avoid co2 emission in pounds per kWh for electricity
+		var CARBON_POUNDS_PER_KWH = 0.905;
+		// months
+		var MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+		// api key and fixed url
+		var APIKEY = "DEMO_KEY";
+		var APIURL = "http://developer.nrel.gov/api/pvwatts/v5.json?api_key=" + APIKEY +"&azimuth=180&tilt=40&array_type=1&module_type=1&losses=10";
+		
+		/* GLOBAL VARIABLES */
 		var lastresults;
-		var apikey = "DEMO_KEY";
-		var apiurl = "http://developer.nrel.gov/api/pvwatts/v5.json?api_key=" + apikey +"&azimuth=180&tilt=40&array_type=1&module_type=1&losses=10";
-	    
+    
 		/* Function that executes the API call and retrieve the data*/		
 		function displayData(data){
 			if(data == lastresults){
@@ -288,20 +331,24 @@
 			mydiv.append("<h2>Results</h2>");
 			mydiv.append("<table class='table table-striped'>");
 			mydiv.append("<tr><th colspan='2'>Solar Power Daily/Monthly Average for your location </th></tr>");
-			mydiv.append("<tr><th>Irradiation</th><th>Kw Production</th><th>Montly Production</th></tr>");
+			mydiv.append("<tr><th>Month</th><th>Electricity Production</th><th>Avoided CO<sub>2</sub> emission</th></th><th>Monthly Savings</th></tr>");
 			console.log(data.outputs);
-			$.each(data.outputs, function (i, item) {
-				console.log(data.outputs.ac_monthly[i]);
-				/*mydiv.append("<tr><td>"+data.outputs.solrad_monthly[i]+"</td><td>"+data.outputs.ac_monthly[i]+"</td><td>"+data.outputs.ac_monthly[i]*30+"</td></tr>");
-				*/
+			var sumSavings = 0;
+			$.each(data.outputs.ac_monthly, function (i, item) {
+				console.log(data.outputs.solrad_monthly[i]);
+				console.log(ELECTRICITY_PRICE[i]);
+				mydiv.append("<tr><td>"+MONTHS[i]+"</td><td>"+data.outputs.ac_monthly[i].toFixed(2)+" kWh</td><td>"+(data.outputs.ac_monthly[i]*CARBON_POUNDS_PER_KWH).toFixed(2)+" pounds</td><td>$ "+(data.outputs.ac_monthly[i]*ELECTRICITY_PRICE[i]).toFixed(2)+"</td></tr>");
+				sumSavings += data.outputs.ac_monthly[i]*ELECTRICITY_PRICE[i];
 			});
+			mydiv.append("<tr><td colspan='2'>Annual estimated savings:</td><td>$ "+sumSavings.toFixed(2)+"</td></tr>");
 			mydiv.append("</table>");
+			
 			lastresults = data;
 		}
 
 		/* Function that executes the API call and retrieve the data*/
         function loadResults(zipcode, capacity) {
-            var solarAPI = apiurl + "&address=" + zipcode + "&system_capacity=" + capacity;
+            var solarAPI = APIURL + "&address=" + zipcode + "&system_capacity=" + capacity;
             $.getJSON(solarAPI, {
                 tags: "Solar Power Estimation",
                 tagmode: "any",
