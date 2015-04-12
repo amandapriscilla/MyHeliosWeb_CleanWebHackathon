@@ -316,12 +316,13 @@
 		// months
 		var MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 		// api key and fixed url
-		var APIKEY = "DEMO_KEY";
+		var APIKEY = "gnAQjxSNfEU5RJ24RESvkn4r38H8keBvJI4f8rIn";
 		var APIURL = "http://developer.nrel.gov/api/pvwatts/v5.json?api_key=" + APIKEY +"&azimuth=180&tilt=40&array_type=1&module_type=1&losses=10";
 		
 		/* GLOBAL VARIABLES */
 		var lastresults;
-    
+		$("#results").hide();
+		
 		/* Function that executes the API call and retrieve the data*/		
 		function displayData(data){
 			if(data == lastresults){
@@ -365,7 +366,6 @@
             loadResults($("#zipcode").val(), $("#capacity").val());
         });
 		
-		$("#results").hide();
 
 		
 	</script>
